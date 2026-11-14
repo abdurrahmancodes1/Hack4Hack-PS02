@@ -95,12 +95,11 @@ describe("Express Backend Test Suite - 20 Vitest Tests", () => {
       expect(result.success).toBe(true);
     });
 
-    it("5. initiateUploadSchema: should accept allowed archive formats and reject non-archive extensions", () => {
+    it("5. initiateUploadSchema: should accept ZIP/PDF files and reject unsupported extensions", () => {
       const validExtensions = [
         "archive.zip",
-        "data.tar.gz",
-        "build.tgz",
-        "bundle.tar",
+        "project.pdf",
+        "PROJECT.PDF",
       ];
       for (const fileName of validExtensions) {
         const res = initiateUploadSchema.safeParse({
@@ -111,12 +110,14 @@ describe("Express Backend Test Suite - 20 Vitest Tests", () => {
         expect(res.success).toBe(true);
       }
 
-      const invalid = initiateUploadSchema.safeParse({
-        fileName: "malicious.exe",
-        fileSizeBytes: 2048,
-        partCount: 2,
-      });
-      expect(invalid.success).toBe(false);
+      for (const fileName of ["malicious.exe", "data.tar.gz", "build.tgz", "bundle.tar"]) {
+        const invalid = initiateUploadSchema.safeParse({
+          fileName,
+          fileSizeBytes: 2048,
+          partCount: 2,
+        });
+        expect(invalid.success).toBe(false);
+      }
     });
 
     it("6. signPartSchema and completeUploadSchema: should enforce part number bounds and non-empty parts list", () => {
