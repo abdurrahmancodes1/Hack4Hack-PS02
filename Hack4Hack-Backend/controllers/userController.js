@@ -9,6 +9,28 @@ import AppError from "../utils/AppError.js";
 
 const SESSION_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
 
+// Team IDs intentionally match participant user IDs. Concurrent registration
+// or first-login requests can both observe a missing team, so treat the unique
+// _id index as the final guard and accept the request if the other request won.
+const ensureParticipantTeam = async (user) => {
+  try {
+    await Team.updateOne(
+      { _id: user._id },
+      {
+        $setOnInsert: {
+          name: `${user.name}'s team`,
+          createdBy: user._id,
+        },
+      },
+      { upsert: true },
+    );
+  } catch (error) {
+    if (error?.code !== 11000 || !(await Team.exists({ _id: user._id }))) {
+      throw error;
+    }
+  }
+};
+
 export const register = async (req, res) => {
   const { success, data } = registerSchema.safeParse(req.body);
   if (!success) throw new AppError("Invalid input", 400);
@@ -31,13 +53,9 @@ export const register = async (req, res) => {
     role: assignedRole,
   });
 
-  // 2. Then create the user's team. teamId === userId by design.
+  // 2. Ensure the user's team. teamId === userId by design.
   if (assignedRole === "Participant") {
-    await Team.create({
-      _id: user._id,
-      name: `${user.name}'s team`,
-      createdBy: user._id,
-    });
+    await ensureParticipantTeam(user);
   }
 
   // 3. Build the session.
@@ -103,11 +121,7 @@ export const login = async (req, res) => {
   if (actualRole === "Participant") {
     const teamExists = await Team.exists({ _id: user._id });
     if (!teamExists) {
-      await Team.create({
-        _id: user._id,
-        name: `${user.name}'s team`,
-        createdBy: user._id,
-      });
+      await ensureParticipantTeam(user);
     }
   }
 
