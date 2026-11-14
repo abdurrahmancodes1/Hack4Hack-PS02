@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiUrl } from "../api/apiBaseUrl.js";
 import { useNavigate } from "react-router-dom";
 import {
   useGetOrganizerStatsQuery,
@@ -105,7 +106,7 @@ export default function OrganizerDashboard() {
     setIsExporting(true);
     try {
       const response = await fetch(
-        "http://localhost:4000/organizer/export/csv",
+        apiUrl("/organizer/export/csv"),
         {
           method: "GET",
           credentials: "include",
@@ -149,7 +150,7 @@ export default function OrganizerDashboard() {
   const handleDownloadFile = async (submissionId) => {
     try {
       const res = await fetch(
-        `http://localhost:4000/organizer/submissions/${submissionId}/download`,
+        apiUrl(`/organizer/submissions/${submissionId}/download`),
         {
           credentials: "include",
         },

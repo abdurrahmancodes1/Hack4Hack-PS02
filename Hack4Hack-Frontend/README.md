@@ -37,4 +37,6 @@ npm run dev
 ```
 
 The application will launch at `http://localhost:5173`.
-All API requests (`/api/v1/*` and `/health`) are automatically proxied to the backend running at `http://localhost:4000`.
+API requests are proxied to `http://localhost:4000` by Vite during local development. For Vercel, the checked-in `vercel.json` rewrites API paths to the deployed backend while keeping the browser requests same-origin. `API_PROXY_TARGET` is only for Vite's development server; do not use it as the production browser API URL. If deploying without the Vercel rewrites, set `VITE_API_BASE_URL` to the public backend origin and allow the Vercel domain in the backend CORS configuration.
+
+For the Vercel project, set the Root Directory to `Hack4Hack-Frontend`, Build Command to `npm run build`, and Output Directory to `dist`. Set the backend's `FRONTEND_URL` environment variable to the deployed Vercel origin so its CORS allowlist includes the frontend.
