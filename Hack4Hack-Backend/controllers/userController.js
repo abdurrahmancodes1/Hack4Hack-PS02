@@ -78,7 +78,8 @@ export const register = async (req, res) => {
     httpOnly: true,
     signed: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "lax",
+    path: "/",
     maxAge: SESSION_EXPIRY_SECONDS * 1000,
   });
 
@@ -144,7 +145,8 @@ export const login = async (req, res) => {
     httpOnly: true,
     signed: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "lax",
+    path: "/",
     maxAge: SESSION_EXPIRY_SECONDS * 1000,
   });
 

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/user/:path*", "destination": "https://hack4hack-ps02.onrender.com/user/:path*" },
+    { "source": "/teams/:path*", "destination": "https://hack4hack-ps02.onrender.com/teams/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://hack4hack-ps02.onrender.com/uploads/:path*" },
+    { "source": "/submissions/:path*", "destination": "https://hack4hack-ps02.onrender.com/submissions/:path*" },
+    { "source": "/organizer/:path*", "destination": "https://hack4hack-ps02.onrender.com/organizer/:path*" },
+    { "source": "/health", "destination": "https://hack4hack-ps02.onrender.com/health" },
+    { "source": "/hackathon", "destination": "https://hack4hack-ps02.onrender.com/hackathon" },
+    { "source": "/hackathon/:path*", "destination": "https://hack4hack-ps02.onrender.com/hackathon/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

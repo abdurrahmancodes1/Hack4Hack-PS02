@@ -1,12 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const API_BASE_URL = (
-  import.meta.env.DEV
-    ? import.meta.env.VITE_API_URL_LOCAL
-    : import.meta.env.VITE_API_URL_PRODUCTION
-) || (import.meta.env.DEV
-  ? "http://localhost:4000"
-  : "https://hack4hack-ps02.onrender.com");
+// In production use same-origin paths so Vercel can proxy requests and keep
+// the signed session cookie first-party. Locally use the backend directly.
+const API_BASE_URL = import.meta.env.DEV
+  ? import.meta.env.VITE_API_URL_LOCAL || "http://localhost:4000"
+  : "";
 
 export const apiUrl = (path) =>
   `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
@@ -14,7 +12,7 @@ export const apiUrl = (path) =>
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${API_BASE_URL}/`,
+    baseUrl: API_BASE_URL ? `${API_BASE_URL}/` : "/",
     credentials: "include",
   }),
   tagTypes: ["User", "Team", "Submission", "Organizer", "Hackathon"],
