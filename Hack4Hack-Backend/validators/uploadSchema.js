@@ -1,8 +1,9 @@
 import { z } from "zod";
 
-const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
-const MIN_FILE_SIZE_BYTES = 22; // Minimum size of an empty ZIP end-of-directory record
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+const MIN_FILE_SIZE_BYTES = 1;
 
+const ALLOWED_FILE_EXTENSIONS = /\.(zip|pdf)$/i;
 export const initiateUploadSchema = z.object({
   fileName: z
     .string()
@@ -10,26 +11,23 @@ export const initiateUploadSchema = z.object({
     .max(255, "File name is too long")
     .trim()
     .refine(
-      (name) => /\.zip$/i.test(name),
-      "Only ZIP archives are currently supported",
+      (name) => ALLOWED_FILE_EXTENSIONS.test(name),
+      "Only ZIP and PDF files are supported",
     ),
+
   fileSizeBytes: z
     .number()
-    .int("File size must be an integer")
-    .min(
-      MIN_FILE_SIZE_BYTES,
-      `A ZIP upload must be at least ${MIN_FILE_SIZE_BYTES} bytes`,
-    )
-    .max(
-      MAX_FILE_SIZE_BYTES,
-      `File size exceeds maximum limit of 100 MB (${MAX_FILE_SIZE_BYTES} bytes)`,
-    ),
-  partCount: z
-    .number()
-    .int("Part count must be an integer")
-    .min(1, "Part count must be at least 1")
-    .max(20, "Part count cannot exceed 20 parts"),
-  contentType: z.string().max(128).optional().default("application/zip"),
+    .int()
+    .min(MIN_FILE_SIZE_BYTES)
+    .max(MAX_FILE_SIZE_BYTES),
+
+  partCount: z.number().int().min(1).max(20),
+
+  contentType: z
+    .string()
+    .max(128)
+    .optional()
+    .default("application/octet-stream"),
 });
 
 export const signPartSchema = z.object({

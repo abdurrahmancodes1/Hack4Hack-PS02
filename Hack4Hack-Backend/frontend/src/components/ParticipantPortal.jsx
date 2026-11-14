@@ -26,6 +26,7 @@ import {
   Loader2,
   AlertCircle,
   FileArchive,
+  FileText,
   ArrowRight,
   ShieldCheck,
   RefreshCw,
@@ -130,9 +131,15 @@ export default function ParticipantPortal() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!/\.(zip|pdf)$/i.test(file.name)) {
+      setSubmitError("Please select a ZIP or PDF file.");
+      setSelectedFile(null);
+      return;
+    }
+
     if (file.size > 100 * 1024 * 1024) {
       setSubmitError(
-        "File exceeds 100 MB limit. Please compress or select a smaller archive.",
+        "File exceeds 100 MB limit. Please select a smaller file.",
       );
       setSelectedFile(null);
       return;
@@ -155,7 +162,7 @@ export default function ParticipantPortal() {
     e.preventDefault();
     if (!selectedFile) {
       setSubmitError(
-        "Please select a ZIP project file up to 100 MB.",
+        "Please select a ZIP or PDF project file up to 100 MB.",
       );
       return;
     }
@@ -212,7 +219,11 @@ export default function ParticipantPortal() {
         const initRes = await initiateUpload({
           fileName: selectedFile.name,
           fileSizeBytes: selectedFile.size,
-          contentType: selectedFile.type || "application/zip",
+          contentType:
+            selectedFile.type ||
+            (selectedFile.name.toLowerCase().endsWith(".pdf")
+              ? "application/pdf"
+              : "application/zip"),
           partCount,
         }).unwrap();
         fileId = initRes.fileId;
@@ -786,7 +797,7 @@ export default function ParticipantPortal() {
                   type="file"
                   id="project-file-input"
                   className="hidden"
-                  accept=".zip"
+                  accept=".zip,.pdf,application/zip,application/pdf"
                   onChange={handleFileChange}
                 />
                 <label
@@ -794,7 +805,11 @@ export default function ParticipantPortal() {
                   className="cursor-pointer block"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-blue-50 text-brand-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                    <FileArchive className="w-6 h-6" />
+                    {selectedFile?.name.toLowerCase().endsWith(".pdf") ? (
+                      <FileText className="w-6 h-6" />
+                    ) : (
+                      <FileArchive className="w-6 h-6" />
+                    )}
                   </div>
                   {selectedFile ? (
                     <div>
@@ -811,10 +826,10 @@ export default function ParticipantPortal() {
                   ) : (
                     <div>
                       <span className="font-semibold text-sm text-slate-800">
-                        Click to select a ZIP archive
+                        Click to select a ZIP archive or PDF
                       </span>
                       <span className="block text-xs text-slate-400 mt-1">
-                        Supported: .zip (Max 100 MB)
+                        Supported: .zip or .pdf (Max 100 MB)
                       </span>
                     </div>
                   )}
@@ -877,8 +892,8 @@ export default function ParticipantPortal() {
                   Validation Status
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Automated background worker inspection (archive integrity, zip
-                  bombs, malware, demo links).
+                  Automated background worker checks (ZIP safety, PDF parsing,
+                  and submitted links).
                 </p>
               </div>
               <button

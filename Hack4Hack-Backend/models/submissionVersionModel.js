@@ -34,8 +34,10 @@ const submissionVersionSchema = new mongoose.Schema(
       index: true,
     },
     validationReport: {
+      fileChecked: Boolean,
       archiveChecked: Boolean,
       fileCount: Number,
+      pageCount: Number,
       uncompressedSizeBytes: Number,
       detectedMimeType: String,
       contentHashSha256: String,

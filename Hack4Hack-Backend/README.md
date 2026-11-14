@@ -1,6 +1,6 @@
 # Hack4Hack 2026 · Problem Statement 2
 
-Project submission service for Deadline Crush. The browser uploads ZIP files directly to S3-compatible storage with multipart signed URLs. The API records immutable versions and a BullMQ worker checks each file in the background.
+Project submission service for Deadline Crush. The browser uploads ZIP or PDF files directly to S3-compatible storage with multipart signed URLs. The API records immutable versions and a BullMQ worker checks each file in the background.
 
 ## Run locally
 
@@ -18,7 +18,7 @@ Set the deadline in the organizer dashboard or with `SUBMISSION_DEADLINE_ISO`. D
 
 ## Submission behavior
 
-- Only `.zip` files are accepted. The worker checks the file signature, archive paths, entry count, decompressed size, executable extensions, and a high compression ratio. It extracts a small README preview without writing archive contents to disk.
+- `.zip` and `.pdf` files up to 100 MB are accepted. The worker identifies the actual type from file content. ZIPs are checked for unsafe paths, entry count, expanded size, executable extensions, and high compression ratios; a bounded README preview is extracted without writing archive contents to disk. PDFs are parsed, page count is recorded, and bounded text from the first page is stored as a preview. Invalid, encrypted, and unreadable PDFs are rejected.
 - Each version stores its own project fields and file reference. Validation status is `PENDING`, `VALIDATING`, `VALID`, or `REJECTED`.
 - The browser saves the upload ID and received ETags locally. After a connection drop, reselect the same file and continue missing parts using storage's part list. The user must reselect the file because browsers do not persist access to local files.
 - Mutation requests use an idempotency key. The server stores a unique team/key pair and uses the version ID as the queue job ID. A recovery sweep re-enqueues stale pending work. Worker result updates and validation audit records are safe to replay.

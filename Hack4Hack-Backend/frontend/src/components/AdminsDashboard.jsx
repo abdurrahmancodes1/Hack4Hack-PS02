@@ -35,6 +35,7 @@ export default function OrganizerDashboard() {
     isOpen: false,
     title: "",
     text: "",
+    kind: "zip_readme",
   });
 
   const {
@@ -165,11 +166,12 @@ export default function OrganizerDashboard() {
     }
   };
 
-  const handleViewPreview = (title, previewText) => {
+  const handleViewPreview = (title, preview) => {
     setPreviewModal({
       isOpen: true,
       title: title || "Project Archive",
-      text: previewText || "No README or text preview found in this archive.",
+      text: preview?.text || "No first-page text or README preview is available.",
+      kind: preview?.kind || "zip_readme",
     });
   };
 
@@ -397,7 +399,7 @@ export default function OrganizerDashboard() {
                     sub.isDisqualified || sub.teamId?.isDisqualified;
 
                   // 🚨 EXTRACT PREVIEW TEXT SAFELY
-                  const previewText = active?.fileAssetId?.preview?.text;
+                  const filePreview = active?.fileAssetId?.preview;
 
                   return (
                     <tr
@@ -442,13 +444,13 @@ export default function OrganizerDashboard() {
 
                       <td className="py-3 px-3 space-x-2">
                         {/* 🚨 PREVIEW BUTTON */}
-                        {previewText && (
+                        {filePreview?.text && (
                           <button
                             onClick={() =>
-                              handleViewPreview(sub.title, previewText)
+                              handleViewPreview(sub.title, filePreview)
                             }
                             className="text-slate-600 hover:text-slate-900 hover:underline inline-flex items-center gap-1 font-semibold"
-                            title="View README Preview"
+                            title={filePreview.kind === "pdf_first_page" ? "View PDF first-page text" : "View ZIP README preview"}
                           >
                             <FileText className="w-3 h-3" />
                             <span>Preview</span>
@@ -542,7 +544,7 @@ export default function OrganizerDashboard() {
                 </h3>
                 <button
                   onClick={() =>
-                    setPreviewModal({ isOpen: false, title: "", text: "" })
+                    setPreviewModal({ isOpen: false, title: "", text: "", kind: "zip_readme" })
                   }
                   className="p-1 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
                 >
@@ -550,6 +552,9 @@ export default function OrganizerDashboard() {
                 </button>
               </div>
               <div className="p-4 overflow-y-auto">
+                <p className="text-xs text-slate-500 mb-2">
+                  {previewModal.kind === "pdf_first_page" ? "PDF first-page text preview" : "ZIP README preview"}
+                </p>
                 <pre className="text-sm bg-slate-50 p-4 rounded-xl whitespace-pre-wrap font-mono text-slate-700">
                   {previewModal.text}
                 </pre>

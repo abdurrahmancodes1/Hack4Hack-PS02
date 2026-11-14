@@ -8,7 +8,7 @@ import { SUBMISSION_QUEUE_NAME } from "../queues/submissionQueue.js";
 import SubmissionVersion from "../models/submissionVersionModel.js";
 import Team from "../models/teamModel.js";
 import FileAsset from "../models/fileAssetModel.js";
-import { inspectArchiveStream } from "../services/archiveValidator.js";
+import { inspectSubmissionFileStream } from "../services/submissionFileValidator.js";
 import { checkSubmissionLinks } from "../services/linkChecker.js";
 import { logAuditEvent } from "../services/auditService.js";
 
@@ -133,10 +133,10 @@ export const processValidationJob = async (job) => {
     new HeadObjectCommand({ Bucket: getBucketName(), Key: fileAsset.s3Key }),
   );
 
-  let archiveResult;
+  let fileResult;
 
   if (!head.ContentLength || head.ContentLength > MAX_UPLOAD_BYTES || head.ContentLength !== fileAsset.declaredSizeBytes) {
-    archiveResult = {
+    fileResult = {
       valid: false,
       errors: [head.ContentLength !== fileAsset.declaredSizeBytes ? "Uploaded file size does not match the declared size" : "Uploaded file is empty or exceeds 100 MB"],
       fileCount: 0,
@@ -160,7 +160,10 @@ export const processValidationJob = async (job) => {
     );
     if (!fullResponse.Body) throw new Error("S3 returned empty body");
 
-    archiveResult = await inspectArchiveStream(headerBuffer, fullResponse.Body);
+    fileResult = await inspectSubmissionFileStream(
+      headerBuffer,
+      fullResponse.Body,
+    );
   }
 
   let linkResults = [];
@@ -175,7 +178,7 @@ export const processValidationJob = async (job) => {
     ];
   }
 
-  const finalErrors = [...archiveResult.errors];
+  const finalErrors = [...fileResult.errors];
   for (const link of linkResults) {
     if (!link.reachable) {
       finalErrors.push(
@@ -184,7 +187,7 @@ export const processValidationJob = async (job) => {
     }
   }
 
-  const isValid = archiveResult.valid && finalErrors.length === 0;
+  const isValid = fileResult.valid && finalErrors.length === 0;
 
   await SubmissionVersion.updateOne(
     { _id: version._id },
@@ -192,11 +195,15 @@ export const processValidationJob = async (job) => {
       $set: {
         validationStatus: isValid ? "VALID" : "REJECTED",
         validationReport: {
-          archiveChecked: true,
-          fileCount: archiveResult.fileCount,
-          uncompressedSizeBytes: archiveResult.uncompressedSizeBytes,
-          detectedMimeType: archiveResult.detectedMimeType,
-          contentHashSha256: archiveResult.contentHashSha256,
+          fileChecked: true,
+          archiveChecked: fileResult.detectedMimeType === "application/zip",
+          fileCount: fileResult.fileCount,
+          ...(Number.isInteger(fileResult.pageCount)
+            ? { pageCount: fileResult.pageCount }
+            : {}),
+          uncompressedSizeBytes: fileResult.uncompressedSizeBytes,
+          detectedMimeType: fileResult.detectedMimeType,
+          contentHashSha256: fileResult.contentHashSha256,
           linksChecked: linkResults,
           validationErrors: finalErrors,
           validatedAt: new Date(),
@@ -210,9 +217,9 @@ export const processValidationJob = async (job) => {
     {
       $set: {
         status: isValid ? "VALIDATED" : "REJECTED",
-        contentHashSha256: archiveResult.contentHashSha256 || undefined,
-        detectedMimeType: archiveResult.detectedMimeType,
-        preview: archiveResult.preview || undefined,
+        contentHashSha256: fileResult.contentHashSha256 || undefined,
+        detectedMimeType: fileResult.detectedMimeType,
+        preview: fileResult.preview || undefined,
         validationErrors: finalErrors,
         validatedAt: new Date(),
       },

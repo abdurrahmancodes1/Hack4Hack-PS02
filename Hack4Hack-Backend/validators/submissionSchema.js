@@ -1,9 +1,20 @@
 import { z } from "zod";
 
-const httpUrl = z.string().url().max(2048).refine((value) => {
-  const protocol = new URL(value).protocol;
-  return protocol === "http:" || protocol === "https:";
-}, "Only HTTP and HTTPS links are supported");
+const httpUrl = z
+  .string()
+  .max(2048)
+  .refine((value) => {
+    if (value === "") return true;
+    try {
+      const url = new URL(value);
+
+      return (
+        ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname)
+      );
+    } catch {
+      return false;
+    }
+  }, "Only HTTP and HTTPS links are supported");
 
 export const createSubmissionSchema = z.object({
   fileId: z.string().min(1, "fileId is required").trim(),
@@ -17,12 +28,8 @@ export const createSubmissionSchema = z.object({
     .max(2000, "Description cannot exceed 2000 characters")
     .optional()
     .default(""),
-  repoUrl: httpUrl
-    .optional()
-    .or(z.literal("")),
-  liveDemoUrl: httpUrl
-    .optional()
-    .or(z.literal("")),
+  repoUrl: httpUrl.optional().or(z.literal("")),
+  liveDemoUrl: httpUrl.optional().or(z.literal("")),
   notes: z.string().max(1000).optional().default(""),
   idempotencyKey: z.string().trim().min(1).max(200).optional(),
 });

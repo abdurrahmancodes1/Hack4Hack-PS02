@@ -39,6 +39,7 @@
     "mime-types": "^2.1.35",
     "mongoose": "^8.12.1",
     "nodemailer": "^7.0.13",
+    "pdfjs-dist": "^6.5.438",
     "qs": "^6.14.1",
     "redis": "^5.10.0",
     "resend": "^6.9.1",
