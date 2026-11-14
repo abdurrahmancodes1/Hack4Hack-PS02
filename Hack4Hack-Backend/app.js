@@ -38,8 +38,7 @@ app.use(
 app.use(express.json({ limit: "5mb" }));
 
 const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
+  "https://hack4-hack-ps-02.vercel.app",
   process.env.CLIENT_URL_1,
   process.env.CLIENT_URL_2,
   process.env.FRONTEND_URL,
@@ -62,16 +61,29 @@ const STALE_MS = 2 * 60 * 1000; // 2 minutes
 
 export const sweepStuckUploads = async () => {
   const cutoff = new Date(Date.now() - STALE_MS);
-  const stuckUploads = await FileAsset.find({ status: "COMPLETING", updatedAt: { $lt: cutoff } }).select("_id s3Key");
+  const stuckUploads = await FileAsset.find({
+    status: "COMPLETING",
+    updatedAt: { $lt: cutoff },
+  }).select("_id s3Key");
   for (const asset of stuckUploads) {
     try {
       const metadata = await getS3FileMetaData(asset.s3Key);
       await FileAsset.updateOne(
         { _id: asset._id, status: "COMPLETING" },
-        { $set: { status: "COMPLETED", completedAt: new Date(), fileSizeBytes: metadata.ContentLength, s3ETag: metadata.ETag } },
+        {
+          $set: {
+            status: "COMPLETED",
+            completedAt: new Date(),
+            fileSizeBytes: metadata.ContentLength,
+            s3ETag: metadata.ETag,
+          },
+        },
       );
     } catch {
-      await FileAsset.updateOne({ _id: asset._id, status: "COMPLETING" }, { $set: { status: "UPLOADING" } });
+      await FileAsset.updateOne(
+        { _id: asset._id, status: "COMPLETING" },
+        { $set: { status: "UPLOADING" } },
+      );
     }
   }
   const stuck = await SubmissionVersion.find({
@@ -89,7 +101,10 @@ export const sweepStuckUploads = async () => {
   }
   return stuck.length + stuckUploads.length;
 };
-const recoveryTimer = setInterval(() => sweepStuckUploads().catch(console.error), 60_000);
+const recoveryTimer = setInterval(
+  () => sweepStuckUploads().catch(console.error),
+  60_000,
+);
 recoveryTimer.unref();
 
 // Health check endpoint for load balancers and container orchestrators
