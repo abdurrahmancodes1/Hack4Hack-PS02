@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { apiUrl } from "../api/apiBaseUrl.js";
+import { apiUrl } from "../api/authApi.js";
 import { useNavigate } from "react-router-dom";
 import {
   useGetOrganizerStatsQuery,
