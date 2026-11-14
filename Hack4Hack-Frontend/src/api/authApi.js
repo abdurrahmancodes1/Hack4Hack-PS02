@@ -4,7 +4,7 @@ import { API_BASE_URL } from "./apiBaseUrl.js";
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: API_BASE_URL ? `${API_BASE_URL}/` : "/",
+    baseUrl: `${API_BASE_URL}/`,
     credentials: "include",
   }),
   tagTypes: ["User", "Team", "Submission", "Organizer", "Hackathon"],
