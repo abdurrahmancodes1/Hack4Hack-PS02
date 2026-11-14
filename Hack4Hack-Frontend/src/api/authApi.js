@@ -1,10 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { API_BASE_URL } from "./apiBaseUrl.js";
 
 export const authApi = createApi({
   reducerPath: "authApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "https://hack4hack-ps02.onrender.com",
+    baseUrl: "http://localhost:4000" || "https://hack4hack-ps02.onrender.com",
     credentials: "include",
   }),
   tagTypes: ["User", "Team", "Submission", "Organizer", "Hackathon"],

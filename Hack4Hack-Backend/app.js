@@ -38,7 +38,6 @@ app.use(
 app.use(express.json({ limit: "5mb" }));
 
 const allowedOrigins = [
-  "https://hack4-hack-ps-02.vercel.app",
   process.env.CLIENT_URL_1,
   process.env.CLIENT_URL_2,
   process.env.FRONTEND_URL,
