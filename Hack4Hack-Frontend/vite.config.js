@@ -7,32 +7,50 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // Only proxy actual API endpoints!
-      "/user": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
-      "/teams": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
-      "/uploads": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
-      "/submissions": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
+      "/user": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/teams": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/uploads": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/submissions": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
       "/organizer/stats": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000",
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
         changeOrigin: true,
       },
       "/organizer/submissions": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000",
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
         changeOrigin: true,
       },
       "/organizer/teams": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000",
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
         changeOrigin: true,
       },
       "/organizer/hackathon": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000",
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
         changeOrigin: true,
       },
       "/organizer/export": {
-        target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000",
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
         changeOrigin: true,
       },
-      "/health": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
-      "/hackathon": { target: process.env.VITE_API_PROXY_TARGET || "http://localhost:4000", changeOrigin: true },
+      "/health": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/hackathon": {
+        target: import.meta.env.API_PROXY_TARGET || "http://localhost:4000",
+        changeOrigin: true,
+      },
     },
   },
 });
