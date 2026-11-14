@@ -40,8 +40,8 @@ export const register = async (req, res) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw new AppError("This email already exists", 409);
 
-  // Organizer accounts are provisioned by an administrator, never selected by a public registrant.
-  const assignedRole = "Participant";
+  // The registration form lets the user choose Participant or Organizer.
+  const assignedRole = role || "Participant";
   const hashedPassword = await bcrypt.hash(password, 12);
 
   // 1. Create the user first.
