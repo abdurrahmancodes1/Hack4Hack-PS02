@@ -1,7 +1,6 @@
 import express from "express";
 import checkAuth from "../middlewares/authMiddleware.js";
 import { attachTeam } from "../middlewares/attachTeam.js";
-import { enforceDeadline } from "../middlewares/deadlineMiddleware.js";
 import {
   initiateUpload,
   signPart,
@@ -19,7 +18,6 @@ router.use(checkAuth, attachTeam);
 
 router.post(
   "/multipart/initiate",
-  enforceDeadline,
   rateLimiter({ limit: 10, window: 60 }),
   asyncHandler(initiateUpload),
 );
