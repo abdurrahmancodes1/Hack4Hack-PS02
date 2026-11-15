@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   useGetOrganizerStatsQuery,
   useGetOrganizerSubmissionsQuery,
+  useGetHackathonInfoQuery,
   useDisqualifyTeamMutation,
   useSetHackathonDeadlineMutation,
   useLogoutMutation,
@@ -30,6 +31,11 @@ export default function OrganizerDashboard() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
+  const [deadlineInput, setDeadlineInput] = useState(() => {
+    const deadline = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
+    return deadline.toISOString().slice(0, 16);
+  });
 
   // 🚨 State for the Preview Modal
   const [previewModal, setPreviewModal] = useState({
@@ -52,6 +58,7 @@ export default function OrganizerDashboard() {
 
   const [disqualifyTeam] = useDisqualifyTeamMutation();
   const [setDeadline] = useSetHackathonDeadlineMutation();
+  const { data: hackathon } = useGetHackathonInfoQuery();
   const [logout] = useLogoutMutation();
   const navigate = useNavigate();
   const { data: user } = useGetCurrentUserQuery();
@@ -72,18 +79,20 @@ export default function OrganizerDashboard() {
 
   const handleLaunchHackathon = async () => {
     setIsLaunching(true);
-    // Sets the deadline to 2 hours from now
-    const twoHoursFromNow = new Date(
-      Date.now() + 2 * 60 * 60 * 1000,
-    ).toISOString();
+    const deadlineAt = new Date(deadlineInput);
+    if (!Number.isFinite(deadlineAt.getTime()) || deadlineAt.getTime() <= Date.now()) {
+      alert("Choose a deadline in the future.");
+      setIsLaunching(false);
+      return;
+    }
 
     try {
       await setDeadline({
         name: "Hack4Hack 2026",
-        deadlineAt: twoHoursFromNow,
+        deadlineAt: deadlineAt.toISOString(),
         gracePeriodSeconds: 300,
       }).unwrap();
-      alert("Hackathon launched! Deadline set to 2 hours from now.");
+      alert("Hackathon started. The selected deadline is now shared by all participants.");
       refetchStats();
       refetchSubmissions();
     } catch (err) {
@@ -240,19 +249,29 @@ export default function OrganizerDashboard() {
               <RefreshCw className="w-4 h-4" />
             </button>
 
-            {/* 🚨 LAUNCH HACKATHON BUTTON */}
+            <label className="flex flex-col gap-1 text-[11px] font-semibold text-slate-500">
+              Submission deadline
+              <input
+                type="datetime-local"
+                value={deadlineInput}
+                onChange={(event) => setDeadlineInput(event.target.value)}
+                disabled={hackathon?.isActive}
+                className="rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-700 disabled:bg-slate-100"
+              />
+            </label>
+
             <button
               onClick={handleLaunchHackathon}
-              disabled={isLaunching}
+              disabled={isLaunching || hackathon?.isActive}
               className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
-              title="Launch Hackathon with 2-hour deadline"
+              title={hackathon?.isActive ? "The hackathon has already started" : "Start the hackathon with the selected deadline"}
             >
               {isLaunching ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Play className="w-4 h-4 fill-current" />
               )}
-              <span>Launch Hackathon (2h)</span>
+              <span>{hackathon?.isActive ? `Hackathon ${hackathon.status?.toLowerCase().replace("_", " ")}` : "Start Hackathon"}</span>
             </button>
 
             <button

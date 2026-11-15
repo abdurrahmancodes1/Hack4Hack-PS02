@@ -13,11 +13,14 @@ export const setHackathonDeadline = async (req, res) => {
   const { name, deadlineAt, gracePeriodSeconds } = req.body;
 
   if (!deadlineAt || Number.isNaN(new Date(deadlineAt).getTime())) throw new AppError("A valid deadline is required", 400);
+  if (new Date(deadlineAt).getTime() <= Date.now()) throw new AppError("The deadline must be in the future", 400);
   if (name !== undefined && (typeof name !== "string" || !name.trim() || name.length > 100)) throw new AppError("Hackathon name must be 1 to 100 characters", 400);
   if (gracePeriodSeconds !== undefined && (!Number.isInteger(gracePeriodSeconds) || gracePeriodSeconds < 0 || gracePeriodSeconds > 1800)) throw new AppError("Grace period must be between 0 and 1800 seconds", 400);
 
-  // Deactivate all old hackathons
-  await Hackathon.updateMany({}, { $set: { isActive: false } });
+  const existingHackathon = await Hackathon.findOne({ isActive: true }).lean();
+  if (existingHackathon) {
+    throw new AppError("The hackathon has already been started", 409);
+  }
 
   // Create the new active hackathon
   const hackathon = await Hackathon.create({

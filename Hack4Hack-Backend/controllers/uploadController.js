@@ -65,7 +65,11 @@ export const initiateUpload = async (req, res) => {
   const { fileName, contentType, fileSizeBytes, partCount } = parsed.data;
   const userId = req.user._id;
 
-  const { deadlineTime, gracePeriodMs } = await getDeadlineConfig();
+  const deadlineConfig = await getDeadlineConfig();
+  if (!deadlineConfig) {
+    throw new AppError("The organizer has not started the hackathon yet", 403);
+  }
+  const { deadlineTime, gracePeriodMs } = deadlineConfig;
   const deadline = new Date(deadlineTime);
   const now = Date.now();
 

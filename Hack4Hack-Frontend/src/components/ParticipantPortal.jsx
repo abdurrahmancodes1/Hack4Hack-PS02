@@ -41,7 +41,9 @@ export default function ParticipantPortal() {
     isLoading: isTeamLoading,
     refetch: refetchTeam,
   } = useGetMyTeamQuery();
-  const { data: hackathon } = useGetHackathonInfoQuery();
+  const { data: hackathon } = useGetHackathonInfoQuery(undefined, {
+    pollingInterval: 5000,
+  });
   const {
     data: statusData,
     isLoading: isStatusLoading,
@@ -153,6 +155,10 @@ export default function ParticipantPortal() {
   // Full Multipart Direct S3 Upload & Submission Flow
   const handleProjectSubmit = async (e) => {
     e.preventDefault();
+    if (!hackathon?.isActive) {
+      setSubmitError("The hackathon has not been started by the organizer yet.");
+      return;
+    }
     if (!selectedFile) {
       setSubmitError(
         "Please select a project file (.zip, .tar.gz, etc.) up to 100 MB.",
@@ -396,7 +402,9 @@ export default function ParticipantPortal() {
         >
           <Clock className="w-3.5 h-3.5 shrink-0" />
           <span>
-            {timeLeft.isExpired ? (
+            {!hackathon?.isActive ? (
+              <strong>Waiting for organizer to start the hackathon</strong>
+            ) : timeLeft.isExpired ? (
               <strong>Submissions Closed</strong>
             ) : timeLeft.isGracePeriod ? (
               <>
@@ -681,8 +689,9 @@ export default function ParticipantPortal() {
           <div className="mb-6">
             <h3 className="text-xl font-bold text-slate-900">Submit Project</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Upload your hackathon submission. Direct multipart upload sends
-              files directly to cloud storage up to 100 MB.
+              {hackathon?.isActive
+                ? "Upload your hackathon submission. Files upload directly to cloud storage up to 100 MB."
+                : "The organizer must start the hackathon before submissions can be uploaded."}
             </p>
           </div>
 
@@ -778,6 +787,7 @@ export default function ParticipantPortal() {
                   id="project-file-input"
                   className="hidden"
                   accept=".zip"
+                  disabled={!hackathon?.isActive}
                   onChange={handleFileChange}
                 />
                 <label
@@ -837,7 +847,7 @@ export default function ParticipantPortal() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={isSubmitting || !selectedFile}
+                disabled={isSubmitting || !selectedFile || !hackathon?.isActive || timeLeft.isExpired}
                 className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 text-sm"
               >
                 {isSubmitting ? (

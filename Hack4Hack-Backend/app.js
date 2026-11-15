@@ -9,7 +9,6 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import submissionRoutes from "./routes/submissionRoutes.js";
 import organizerRoutes from "./routes/organizerRoutes.js";
 import { getDeadlineConfig } from "./middlewares/deadlineMiddleware.js";
-import Hackathon from "./models/hackathonModel.js";
 import { connectDB } from "./config/mongoose.js";
 import redisClient, { connectRedis } from "./config/redis.js";
 import { startValidationWorker } from "./workers/validationWorker.js";
@@ -126,20 +125,33 @@ app.get("/health", async (req, res) => {
 });
 
 app.get(["/hackathon", "/api/v1/hackathon"], async (req, res) => {
-  const { deadlineTime, gracePeriodMs, hardCutoffTime } =
-    await getDeadlineConfig();
-  let title = "Hack4Hack 2026";
-  if (mongoose.connection.readyState === 1) {
-    try {
-      const active = await Hackathon.findOne({ isActive: true }).lean();
-      if (active) title = active.title || active.name || title;
-    } catch {
-      // ignore
-    }
+  const config = await getDeadlineConfig();
+  if (!config) {
+    return res.json({
+      success: true,
+      isActive: false,
+      status: "NOT_STARTED",
+      title: "Hack4Hack 2026",
+      deadlineAt: null,
+      gracePeriodSeconds: 300,
+      hardCutoffAt: null,
+      serverTime: new Date().toISOString(),
+    });
   }
+
+  const { hackathon, deadlineTime, gracePeriodMs, hardCutoffTime } = config;
+  const now = Date.now();
+  const status = now > hardCutoffTime
+    ? "CLOSED"
+    : now > deadlineTime
+      ? "GRACE_PERIOD"
+      : "RUNNING";
+
   res.json({
     success: true,
-    title,
+    isActive: true,
+    status,
+    title: hackathon.name || "Hack4Hack 2026",
     deadlineAt: new Date(deadlineTime).toISOString(),
     gracePeriodSeconds: Math.floor(gracePeriodMs / 1000),
     hardCutoffAt: new Date(hardCutoffTime).toISOString(),

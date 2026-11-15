@@ -16,7 +16,9 @@ const fixtures = [];
 await connectDB();
 await connectRedis();
 try {
-  const { deadlineTime } = await getDeadlineConfig();
+  const deadlineConfig = await getDeadlineConfig();
+  if (!deadlineConfig) throw new Error("Start the hackathon in the organizer dashboard before creating load-test fixtures");
+  const { deadlineTime } = deadlineConfig;
   if (Date.now() > deadlineTime) throw new Error("Set a future deadline before creating load-test fixtures");
   for (let start = 0; start < count; start += 100) {
     const batch = Math.min(100, count - start);
